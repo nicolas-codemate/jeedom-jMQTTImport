@@ -35,6 +35,8 @@ try {
             $broker = init('broker');
             $columnForEqName = init('columnForEqName');
             $template = init('template');
+            $isVisible = init('isVisible');
+            $isEnable = init('isEnable');
             $csvFile = $_FILES['csvFile'];
 
             if(!$csvFile) {
@@ -67,7 +69,7 @@ try {
                 return;
             }
 
-            jMQTTImport::importCsv($csvFile, $broker, $parentObject, $columnForEqName, $topic, $template);
+            jMQTTImport::importCsv($csvFile, $broker, $parentObject, $columnForEqName, $topic, $template, $isVisible, $isEnable);
             break;
         case 'fileUploadForImport':
             if (!isset($_FILES['file'])) {

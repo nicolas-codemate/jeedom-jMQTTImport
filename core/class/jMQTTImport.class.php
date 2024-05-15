@@ -42,7 +42,9 @@ class jMQTTImport extends eqLogic
         string $parentObjectId,
         string $columnForEqName,
         string $topic,
-        string $template
+        string $template,
+        bool $isVisible,
+        bool $isEnable
     ): void {
         self::logger(
             'debug',
@@ -57,24 +59,32 @@ class jMQTTImport extends eqLogic
         if (!$handle) {
             $message = sprintf('Impossible d\'ouvrir le fichier %s', $csvFile['name']);
             self::logger('error', $message);
-            ajax::error($message);
+            ajax::error($message, 400);
 
             return;
         }
+        $authorizedMimeTypes = [
+            'text/x-comma-separated-values',
+            'text/comma-separated-values',
+            'application/octet-stream',
+            'application/vnd.ms-excel',
+            'application/x-csv',
+            'text/x-csv',
+            'text/csv',
+            'application/csv',
+            'application/excel',
+            'application/vnd.msexcel',
+            'text/plain',
+        ];
 
-//        $authorizedMimeTypes = [
-//          'text/plain',
-//          'text/csv'
-//        ];
-//
-//        // check the mime type
-//        if (false === \in_array($csvFile['type'], $authorizedMimeTypes, true)) {
-//            $message = sprintf('Le fichier %s n\'est pas un fichier CSV', $csvFile['name']);
-//            self::logger('error', $message);
-//            ajax::error($message);
-//
-//            return;
-//        }
+        // check the mime type
+        if (false === \in_array($csvFile['type'], $authorizedMimeTypes, true)) {
+            $message = sprintf('Le fichier %s n\'est pas un fichier CSV', $csvFile['name']);
+            self::logger('error', $message);
+            ajax::error($message, 400);
+
+            return;
+        }
 
         // get the broker from the id
         try {
@@ -82,10 +92,10 @@ class jMQTTImport extends eqLogic
             if (null === $broker) {
                 throw new \RuntimeException();
             }
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             $message = sprintf('Impossible de trouver le broker %s', $brokerId);
             self::logger('error', $message);
-            ajax::error($message);
+            ajax::error($message, 400);
 
             return;
         }
@@ -95,7 +105,7 @@ class jMQTTImport extends eqLogic
         if (!$parentObject) {
             $message = sprintf('Impossible de trouver l\'objet parent %s', $parentObjectId);
             self::logger('error', $message);
-            ajax::error($message);
+            ajax::error($message, 400);
 
             return;
         }
@@ -107,7 +117,7 @@ class jMQTTImport extends eqLogic
             } catch (\Exception $e) {
                 $message = sprintf('Impossible de trouver le template %s', $template);
                 self::logger('error', $message);
-                ajax::error($message);
+                ajax::error($message, 400);
 
                 return;
             }
@@ -116,7 +126,7 @@ class jMQTTImport extends eqLogic
         if (!class_exists('jMQTT')) {
             $message = 'Impossible de trouver la classe jMQTT. Vérifier que le plugin jMQTT est bien installé';
             self::logger('error', $message);
-            ajax::error($message);
+            ajax::error($message, 400);
 
             return;
         }
@@ -126,7 +136,7 @@ class jMQTTImport extends eqLogic
         if (!$header) {
             $message = sprintf('Impossible de lire la première ligne du fichier %s', $csvFile['name']);
             self::logger('error', $message);
-            ajax::error($message);
+            ajax::error($message, 400);
 
             return;
         }
@@ -134,7 +144,7 @@ class jMQTTImport extends eqLogic
         if (false === \in_array($columnForEqName, $header, true)) {
             $message = sprintf('La colonne %s n\'existe pas dans le fichier %s', $columnForEqName, $csvFile['name']);
             self::logger('error', $message);
-            ajax::error($message);
+            ajax::error($message, 400);
 
             return;
         }
@@ -143,7 +153,7 @@ class jMQTTImport extends eqLogic
 
         // read the csv lines
         while ($line = fgetcsv($handle, null, ';')) {
-            $data = array_combine($header, $line);
+            $data = array_combine($header, array_map('trim', $line));
             $data['name'] = $data[$columnForEqName];
             $egLogicData[] = $data;
         }
@@ -160,6 +170,8 @@ class jMQTTImport extends eqLogic
                     'type' => 'eqpt',
                     'eqLogic' => $broker->getId(),
                     'object_id' => $parentObject->getId(),
+                    'isVisible' => (int)$isVisible,
+                    'isEnable' => (int)$isEnable,
                 ];
                 utils::a2o($eqLogic, $eqLogicConfiguration);
                 $eqLogic->save();
@@ -169,9 +181,9 @@ class jMQTTImport extends eqLogic
                     sprintf('Création de l\'équipement %s', $datum['name'])
                 );
                 if ($templateAsJson) {
-                    $topic = self::replaceVariables($topic, $datum);
+                    $eqLogicTopic = self::replaceVariables($topic, $datum);
 
-                    $eqLogic->applyATemplate($templateAsJson, $topic);
+                    $eqLogic->applyATemplate($templateAsJson, $eqLogicTopic);
                     self::logger(
                         'debug',
                         sprintf('Application du template %s à l\'équipement %s', $template, $datum['name'])
@@ -185,8 +197,11 @@ class jMQTTImport extends eqLogic
                 sprintf('Erreur lors de l\'import du fichier %s : %s', $csvFile['name'], $exception->getMessage())
             );
             ajax::error(
-                sprintf('Erreur lors de l\'import du fichier %s : %s', $csvFile['name'], $exception->getMessage())
+                sprintf('Erreur lors de l\'import du fichier %s : %s', $csvFile['name'], $exception->getMessage()),
+                400
             );
+
+            return;
         }
 
         $message = sprintf('Import de %d équipements terminé', $egLogicCreatedCount);

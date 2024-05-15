@@ -132,7 +132,11 @@ $('.eqLogicAction[data-action=importEq]').off('click').on('click', function () {
     dialog_message += '<div class="form-group">'
     dialog_message += '<label class="control-label">{{Nom de la colonne servant pour le nom de l\'équipement: }}</label> ';
     dialog_message += '<input class="bootbox-input bootbox-input-text form-control" autocomplete="nope" type="text" name="columnForEqName">';
-    dialog_message += '</div>'
+    dialog_message += '</div><br/>'
+    dialog_message += '<div class="form-check">';
+    dialog_message += '<label class="checkbox-inline"><input type="checkbox" name="isEnable">Activer</label>'
+    dialog_message += '<label class="checkbox-inline"><input type="checkbox" name="isVisible">Visible</label>'
+    dialog_message += '</div><br/>';
     dialog_message += '<label class="control-label">{{Utiliser un template :}}</label> ';
     dialog_message += '<select class="bootbox-input bootbox-input-select form-control" name="template" id="jmqttTemplateSelector">';
     dialog_message += '</select><br/>';
@@ -187,7 +191,11 @@ $('.eqLogicAction[data-action=importEq]').off('click').on('click', function () {
                     type: 'POST',
                     data: formData,
                     async: false,
-                    success: function () {
+                    success: function (data) {
+                        if(data.state !== 'ok') {
+                            $.fn.showAlert({message: data.result, level: 'error'});
+                            return;
+                        }
                         $.fn.showAlert({message: 'Import terminé', level: 'success'});
                     },
                     cache: false,
