@@ -40,9 +40,10 @@ class jMQTTImport extends eqLogic
         $csvFile,
         string $brokerId,
         string $parentObjectId,
+        string $columnForEqName,
         string $topic,
         string $template
-    ) {
+    ): void {
         self::logger(
             'debug',
             sprintf(
@@ -84,6 +85,7 @@ class jMQTTImport extends eqLogic
             return;
         }
 
+        // get the parent object from the id
         $parentObject = jeeObject::byId($parentObjectId);
         if (!$parentObject) {
             $message = sprintf('Impossible de trouver l\'objet parent %s', $parentObjectId);
@@ -110,6 +112,7 @@ class jMQTTImport extends eqLogic
             $message = 'Impossible de trouver la classe jMQTT. Vérifier que le plugin jMQTT est bien installé';
             self::logger('error', $message);
             ajax::error($message);
+
             return;
         }
 
@@ -119,6 +122,15 @@ class jMQTTImport extends eqLogic
             $message = sprintf('Impossible de lire la première ligne du fichier %s', $csvFile['name']);
             self::logger('error', $message);
             ajax::error($message);
+
+            return;
+        }
+
+        if (false === \in_array($columnForEqName, $header, true)) {
+            $message = sprintf('La colonne %s n\'existe pas dans le fichier %s', $columnForEqName, $csvFile['name']);
+            self::logger('error', $message);
+            ajax::error($message);
+
             return;
         }
 
@@ -127,26 +139,38 @@ class jMQTTImport extends eqLogic
         // read the csv lines
         while ($line = fgetcsv($handle)) {
             $data = array_combine($header, $line);
-            $data['name'] = $line['dev_eui']; // fixme For now we use the dev_eui as the name but we could use plugin configuration do determine from which column to get the name
+            $data['name'] = $data[$columnForEqName];
             $egLogicData[] = $data;
         }
 
         // we use transaction to be able to rollback if any errors occurs during the import
         db::beginTransaction();
 
+        $egLogicCreatedCount = 0;
         try {
-            $eqLogicsCreated = [];
             foreach ($egLogicData as $datum) {
                 $eqLogic = new jMQTT();
                 $eqLogicConfiguration = [
                     'name' => $datum['name'],
                     'type' => 'eqpt',
                     'eqLogic' => $broker->getId(),
+                    'object_id' => $parentObject->getId(),
                 ];
                 utils::a2o($eqLogic, $eqLogicConfiguration);
                 $eqLogic->save();
-                if($templateAsJson) {
+                ++$egLogicCreatedCount;
+                self::logger(
+                    'debug',
+                    sprintf('Création de l\'équipement %s', $datum['name'])
+                );
+                if ($templateAsJson) {
+                    $topic = self::replaceVariables($topic, $datum);
+
                     $eqLogic->applyATemplate($templateAsJson, $topic);
+                    self::logger(
+                        'debug',
+                        sprintf('Application du template %s à l\'équipement %s', $template, $datum['name'])
+                    );
                 }
             }
         } catch (\Throwable $exception) {
@@ -160,7 +184,11 @@ class jMQTTImport extends eqLogic
             );
         }
 
-        ajax::success();
+        $message = sprintf('Import de %d équipements terminé', $egLogicCreatedCount);
+        self::logger('info', $message);
+        db::commit();
+
+        ajax::success(sprintf('Import de %d équipements terminé', $egLogicCreatedCount));
     }
 
     /**
@@ -172,6 +200,27 @@ class jMQTTImport extends eqLogic
     public static function logger($level, $msg): void
     {
         log::add(__CLASS__, $level, $msg);
+    }
+
+    /**
+     * Replace {{variable}} in a template with the corresponding value in the data array
+     * Fallback to the variable name if the value is not found in the data array
+     */
+    public static function replaceVariables(string $template, array $data): string
+    {
+        $toReturn = preg_replace_callback(
+            '/{{(.*?)}}/s',
+            static function ($matches) use ($data) {
+                return $data[$matches[1]] ?? $matches[1];
+            },
+            $template
+        );
+
+        if (!$toReturn) {
+            return $template;
+        }
+
+        return $toReturn;
     }
 
     /*

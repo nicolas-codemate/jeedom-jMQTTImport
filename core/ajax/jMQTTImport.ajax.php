@@ -33,6 +33,7 @@ try {
             $topic = init('topic');
             $parentObject = init('parentObject');
             $broker = init('broker');
+            $columnForEqName = init('columnForEqName');
             $template = init('template');
             $csvFile = $_FILES['csvFile'];
 
@@ -48,13 +49,25 @@ try {
                 return;
             }
 
+            if(!$parentObject) {
+                ajax::error(['message' => __('Aucun objet parent selectionné', __FILE__)]);
+
+                return;
+            }
+
+            if(!$columnForEqName) {
+                ajax::error(['message' => __('Aucune colonne pour le nom de l\'équipement', __FILE__)]);
+
+                return;
+            }
+
             if ($template && !$topic) {
                 ajax::error(['message' => __('Topic obligatoire lorsque le template est renseigné', __FILE__)]);
 
                 return;
             }
 
-            jMQTTImport::importCsv($csvFile, $broker, $parentObject, $topic, $template);
+            jMQTTImport::importCsv($csvFile, $broker, $parentObject, $columnForEqName, $topic, $template);
             break;
         case 'fileUploadForImport':
             if (!isset($_FILES['file'])) {

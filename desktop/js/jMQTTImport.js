@@ -129,11 +129,18 @@ $('.eqLogicAction[data-action=importEq]').off('click').on('click', function () {
         dialog_message += '<option value="' + key + '">' + name + '</option>';
     });
     dialog_message += '</select><br/>';
+    dialog_message += '<div class="form-group">'
+    dialog_message += '<label class="control-label">{{Nom de la colonne servant pour le nom de l\'équipement: }}</label> ';
+    dialog_message += '<input class="bootbox-input bootbox-input-text form-control" autocomplete="nope" type="text" name="columnForEqName">';
+    dialog_message += '</div>'
     dialog_message += '<label class="control-label">{{Utiliser un template :}}</label> ';
     dialog_message += '<select class="bootbox-input bootbox-input-select form-control" name="template" id="jmqttTemplateSelector">';
     dialog_message += '</select><br/>';
-    dialog_message += '<label class="control-label" style="display:none;" id="jmqttTemplateLabel">{{Saisissez le Topic de base :}}</label> ';
-    dialog_message += '<input class="bootbox-input bootbox-input-text form-control" style="display:none;" autocomplete="nope" type="text" name="topic" id="jmqttTopic"><br/>';
+    dialog_message += '<div id="jmqttTemplateFromGroup" style="display:none;" class="form-group">';
+    dialog_message += '<label class="control-label">{{Saisissez le Topic de base :}}</label> ';
+    dialog_message += '<input class="bootbox-input bootbox-input-text form-control" autocomplete="nope" type="text" name="topic"><br/>';
+    dialog_message += '<small id="passwordHelpBlock" class="form-text text-muted">Il est possible ici d\'utiliser du templating.<br/> Exemple mon_topic_\{\{le nom d\'une colonne dans mon fichier\}\}</small>';
+    dialog_message += '</div>';
     dialog_message += '</form>'
     bootbox.confirm({
         title: "{{Importer des équipements}}",
@@ -155,6 +162,11 @@ $('.eqLogicAction[data-action=importEq]').off('click').on('click', function () {
 
                 if (!form['broker'].value) {
                     $.fn.showAlert({message: "{{Broker invalide !}}", level: 'warning'});
+                    return false;
+                }
+
+                if (!form['columnForEqName'].value) {
+                    $.fn.showAlert({message: "{{Nom de l'équipement requis}}", level: 'warning'});
                     return false;
                 }
 
@@ -188,11 +200,9 @@ $('.eqLogicAction[data-action=importEq]').off('click').on('click', function () {
 
     $('#jmqttTemplateSelector').on('change', function () {
         if ($(this).val() == '') {
-            $('#jmqttTemplateLabel').hide();
-            $('#jmqttTopic').hide();
+            $('#jmqttTemplateFromGroup').hide();
         } else {
-            $('#jmqttTemplateLabel').show();
-            $('#jmqttTopic').show();
+            $('#jmqttTemplateFromGroup').show();
         }
     });
 
