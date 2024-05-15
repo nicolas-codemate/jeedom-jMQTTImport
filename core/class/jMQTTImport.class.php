@@ -211,7 +211,7 @@ class jMQTTImport extends eqLogic
         $toReturn = preg_replace_callback(
             '/{{(.*?)}}/s',
             static function ($matches) use ($data) {
-                return $data[$matches[1]] ?? $matches[1];
+                return strtolower($data[$matches[1]]) ?? $matches[1];
             },
             $template
         );
