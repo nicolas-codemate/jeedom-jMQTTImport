@@ -62,8 +62,13 @@ class jMQTTImport extends eqLogic
             return;
         }
 
+        $authorizedMimeTypes = [
+          'text/plain',
+          'text/csv'
+        ];
+
         // check the mime type
-        if ($csvFile['type'] !== 'text/csv') {
+        if (false === \in_array($csvFile['type'], $authorizedMimeTypes, true)) {
             $message = sprintf('Le fichier %s n\'est pas un fichier CSV', $csvFile['name']);
             self::logger('error', $message);
             ajax::error($message);
@@ -117,7 +122,7 @@ class jMQTTImport extends eqLogic
         }
 
         // get the csv header column
-        $header = fgetcsv($handle, 0);
+        $header = fgetcsv($handle, 0, ';');
         if (!$header) {
             $message = sprintf('Impossible de lire la première ligne du fichier %s', $csvFile['name']);
             self::logger('error', $message);
@@ -137,7 +142,7 @@ class jMQTTImport extends eqLogic
         $egLogicData = [];
 
         // read the csv lines
-        while ($line = fgetcsv($handle)) {
+        while ($line = fgetcsv($handle, null, ';')) {
             $data = array_combine($header, $line);
             $data['name'] = $data[$columnForEqName];
             $egLogicData[] = $data;
