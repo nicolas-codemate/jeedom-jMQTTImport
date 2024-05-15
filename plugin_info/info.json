@@ -1,0 +1,23 @@
+{
+	"id": "jMQTTImport",
+	"name": "jMQTT CSV Import",
+	"pluginVersion": "0.1",
+	"description": {
+		"fr_FR": "Plugin pour automatiser la création des équipements jMQTT à partir d'un fichier CSV"
+	},
+	"licence": "AGPL",
+	"author": "Codemate SARL",
+	"require": "4.3",
+	"category": "automation protocol",
+	"hasDependency": true,
+	"hasOwnDeamon": false,
+	"maxDependancyInstallTime": 0,
+	"changelog_beta": "",
+	"changelog": "",
+	"documentation_beta": "/beta",
+	"documentation": "",
+	"language": [
+		"fr_FR"
+	],
+	"compatibility": ""
+}
