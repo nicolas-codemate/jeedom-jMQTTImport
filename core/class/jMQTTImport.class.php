@@ -184,6 +184,16 @@ class jMQTTImport extends eqLogic
                     $eqLogicTopic = self::replaceVariables($topic, $datum);
 
                     $eqLogic->applyATemplate($templateAsJson, $eqLogicTopic);
+
+                    /** @var cmd[] $cmds */
+                    $cmds = $eqLogic->getCmd();
+                    foreach ($cmds as $cmd) {
+                        $request = $cmd->getConfiguration('request');
+                        $request = self::replaceVariables($request, $datum);
+                        $cmd->setConfiguration('request', $request);
+                        $cmd->save();
+                    }
+
                     self::logger(
                         'debug',
                         sprintf('Application du template %s à l\'équipement %s', $template, $datum['name'])

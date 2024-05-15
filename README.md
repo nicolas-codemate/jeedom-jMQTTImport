@@ -1,16 +1,14 @@
-# Template de plugin pour Jeedom
+# jMQTTImport
 
-Ce "template de plugin" sert de base à la réalisation de plugins pour **Jeedom**.
+Ce plugin permet d'importer en masse des équipements reliés à un broker jMQTT.
 
-La documentation générale relative à la conception de plugin est consultable [ici](https://doc.jeedom.com/fr_FR/dev/). Dans le détail :   
-* [Utilisation du template de plugin](https://doc.jeedom.com/fr_FR/dev/plugin_template) : Le template de plugin est une base de plugin pour Jeedom qui doit être adaptée avec l'id de votre plugin et à laquelle il suffit d'ajouter vos propres fonctions. 
-* [Fichier info.json](https://doc.jeedom.com/fr_FR/dev/structure_info_json) : Intégré depuis la version 3.0 de Jeedom, le fichier **info.json** est obligatoire pour le bon fonctionnement des plugins et leur bon déploiement sur le Market Jeedom.
-* [Icône du plugin](https://doc.jeedom.com/fr_FR/dev/Icone_de_plugin) : Afin de pouvoir être publié sur le Market Jeedom, tout plugin doit disposer d’une icône. Attention à ne pas utiliser le même code couleur que les icônes des plugins Jeedom officiels.
-* [Widget du plugin](https://doc.jeedom.com/fr_FR/dev/widget_plugin) : Présentation des différentes manières d'inclure des widgets personnalisés au plugin.
-* [Documentation du plugin](https://doc.jeedom.com/fr_FR/dev/documentation_plugin) : Présentation de la mise en place d'une documentation car un bon plugin n'est rien sans documentation adéquate.
-* [Publication du plugin](https://doc.jeedom.com/fr_FR/dev/publication_plugin) : Description des pré-requis indispensables à la publication du plugin.
+Le plugin jMQTT est donc nécessaire pour utiliser ce plugin.
 
----
-Si vous créez une branch nommée prettier, le robot workflows fera une passe complete sur le code pour que le code soit le plus uniforme possible.
----
-test workflow en cours... for commit
+## Utilisation
+
+* Le fichier CSV à importer doit utiliser le ";" comme séparateur.
+* vous pouvez avoir autant de colonnes que vous le souhaitez dans le fichier csv.
+* vous devez préciser le nom de la colonne qui sera utilisé pour le nom de l'équipement. Attention à la casse.
+* si vous utiliser un template préexistant, vous devrez préciser le nom du topic à utiliser pour chaque équipement
+  * il est possible d'utiliser une syntaxe utilisant le format templating suivant `test_{{ nom de colonne }}`.
+  * également dans le template, dans la partie `commands`, il est possible pour la clé `request` d'utiliser les templates avec les noms de colonne.

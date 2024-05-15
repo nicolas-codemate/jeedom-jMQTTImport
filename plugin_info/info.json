@@ -13,9 +13,8 @@
 	"hasOwnDeamon": false,
 	"maxDependancyInstallTime": 0,
 	"changelog_beta": "",
-	"changelog": "",
-	"documentation_beta": "/beta",
-	"documentation": "",
+	"changelog": "https://github.com/nicolas-codemate/jeedom-jMQTTImport/blob/main/docs/fr_FR/changelog.md",
+	"documentation": "https://github.com/nicolas-codemate/jeedom-jMQTTImport/blob/main/README.md",
 	"language": [
 		"fr_FR"
 	],
