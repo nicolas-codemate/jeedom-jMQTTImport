@@ -62,19 +62,19 @@ class jMQTTImport extends eqLogic
             return;
         }
 
-        $authorizedMimeTypes = [
-          'text/plain',
-          'text/csv'
-        ];
-
-        // check the mime type
-        if (false === \in_array($csvFile['type'], $authorizedMimeTypes, true)) {
-            $message = sprintf('Le fichier %s n\'est pas un fichier CSV', $csvFile['name']);
-            self::logger('error', $message);
-            ajax::error($message);
-
-            return;
-        }
+//        $authorizedMimeTypes = [
+//          'text/plain',
+//          'text/csv'
+//        ];
+//
+//        // check the mime type
+//        if (false === \in_array($csvFile['type'], $authorizedMimeTypes, true)) {
+//            $message = sprintf('Le fichier %s n\'est pas un fichier CSV', $csvFile['name']);
+//            self::logger('error', $message);
+//            ajax::error($message);
+//
+//            return;
+//        }
 
         // get the broker from the id
         try {
