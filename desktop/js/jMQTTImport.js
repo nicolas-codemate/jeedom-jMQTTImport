@@ -143,7 +143,7 @@ $('.eqLogicAction[data-action=importEq]').off('click').on('click', function () {
     dialog_message += '<div id="jmqttTemplateFromGroup" style="display:none;" class="form-group">';
     dialog_message += '<label class="control-label">{{Saisissez le Topic de base :}}</label> ';
     dialog_message += '<input class="bootbox-input bootbox-input-text form-control" autocomplete="nope" type="text" name="topic"><br/>';
-    dialog_message += '<small id="passwordHelpBlock" class="form-text text-muted">Il est possible ici d\'utiliser du templating.<br/> Exemple mon_topic_\{\{le nom d\'une colonne dans mon fichier\}\}</small>';
+    dialog_message += '<small id="passwordHelpBlock" class="form-text text-muted">Il est possible ici d\'utiliser du templating.<br/> Exemple mon-topic-\{\{le nom d\'une colonne dans mon fichier\}\}</small>';
     dialog_message += '</div>';
     dialog_message += '</form>'
     bootbox.confirm({
