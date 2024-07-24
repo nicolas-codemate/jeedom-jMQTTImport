@@ -141,6 +141,10 @@ class jMQTTImport extends eqLogic
             return;
         }
 
+        $header = array_map(static function ($column) {
+            return preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $column);
+        }, $header);
+
         if (false === \in_array($columnForEqName, $header, true)) {
             $message = sprintf('La colonne %s n\'existe pas dans le fichier %s', $columnForEqName, $csvFile['name']);
             self::logger('error', $message);
@@ -153,7 +157,11 @@ class jMQTTImport extends eqLogic
 
         // read the csv lines
         while ($line = fgetcsv($handle, null, ';')) {
-            $data = array_combine($header, array_map('trim', $line));
+
+            $line = array_map('trim', $line);
+            $overlay = array_fill(0, count($header), null);
+            $data = array_combine($header, $line + $overlay); // fill the missing columns with null
+
             $data['name'] = $data[$columnForEqName];
             $egLogicData[] = $data;
         }
