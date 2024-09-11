@@ -44,6 +44,7 @@ class jMQTTImport extends eqLogic
      */
     public static function importCsv(
         $csvFile,
+        bool $flushToDb,
         string $brokerId,
         string $parentObjectId,
         string $columnForEqName,
@@ -55,8 +56,9 @@ class jMQTTImport extends eqLogic
         self::logger(
             'debug',
             sprintf(
-                'Import du fichier "%s" avec comme input %s',
+                'Import du fichier "%s" avec comme input %s. Savegarde en bdd : %s',
                 $csvFile['name'],
+                $flushToDb ? 'true' : 'false',
                 var_export(compact('brokerId', 'parentObjectId', 'topic', 'template'), true)
             )
         );
@@ -173,8 +175,10 @@ class jMQTTImport extends eqLogic
             $egLogicData[] = $data;
         }
 
-        // we use transaction to be able to rollback if any errors occurs during the import
-        db::beginTransaction();
+        if ($flushToDb) {
+            // we use transaction to be able to rollback if any errors occurs during the import
+            db::beginTransaction();
+        }
 
         $eqLogicCreated = [];
         try {
@@ -189,12 +193,15 @@ class jMQTTImport extends eqLogic
                     'isEnable' => (int)$isEnable,
                 ];
                 utils::a2o($eqLogic, $eqLogicConfiguration);
-//                $eqLogic->save();
-                self::logger(
-                    'debug',
-                    sprintf('Création de l\'équipement %s', $datum['name'])
-                );
-                if ($templateAsJson) {
+                if ($flushToDb) {
+                    $eqLogic->save();
+                    self::logger(
+                        'debug',
+                        sprintf('Création de l\'équipement %s', $datum['name'])
+                    );
+                }
+
+                if ($flushToDb && $templateAsJson) {
                     $eqLogicTopic = self::replaceVariables($topic, $datum);
 
                     $eqLogic->applyATemplate($templateAsJson, $eqLogicTopic);
@@ -216,7 +223,9 @@ class jMQTTImport extends eqLogic
                 $eqLogicCreated[] = new jMQTTImported($eqLogic, $datum);
             }
         } catch (\Throwable $exception) {
-            db::rollback();
+            if ($flushToDb) {
+                db::rollback();
+            }
             self::logger(
                 'error',
                 sprintf('Erreur lors de l\'import du fichier %s : %s', $csvFile['name'], $exception->getMessage())
@@ -229,7 +238,9 @@ class jMQTTImport extends eqLogic
             return null;
         }
 
-//        db::commit();
+        if ($flushToDb) {
+            db::commit();
+        }
 
         return $eqLogicCreated;
     }
@@ -237,10 +248,10 @@ class jMQTTImport extends eqLogic
     /**
      * @param jMQTTImported[] $JMQTTImporteds
      */
-    public static function buildCsv(array $JMQTTImporteds): ?string
+    public static function buildCsv(array $JMQTTImporteds): void
     {
         if (0 === count($JMQTTImporteds)) {
-            return null;
+            return;
         }
 
         $slugify = static function (?string $value) {
@@ -290,9 +301,11 @@ class jMQTTImport extends eqLogic
             ], self::DEFAULT_CSV_SEPARATOR);
         }
 
-        fclose($handle);
+        $message = sprintf('Fichier %s créé', $csvName);
+        self::logger('info', $message);
 
-        return $csvPath;
+
+        fclose($handle);
     }
 
     /**
@@ -329,7 +342,6 @@ class jMQTTImport extends eqLogic
 
     /*
     * Fonction exécutée automatiquement toutes les minutes par Jeedom
-    public static function cron() {}
     */
 
     /*
@@ -349,6 +361,7 @@ class jMQTTImport extends eqLogic
 
     /*
     * Fonction exécutée automatiquement toutes les 30 minutes par Jeedom
+     * /
     public static function cron30() {}
     */
 
@@ -359,8 +372,17 @@ class jMQTTImport extends eqLogic
 
     /*
     * Fonction exécutée automatiquement tous les jours par Jeedom
-    public static function cronDaily() {}
     */
+    public static function cronDaily()
+    {
+        // empty download directory
+        $files = glob(__DIR__.'/../../download/*');
+        foreach ($files as $file) {
+            if (is_file($file)) {
+                unlink($file);
+            }
+        }
+    }
 
     /*
     * Permet de déclencher une action avant modification d'une variable de configuration du plugin

@@ -140,11 +140,17 @@ $('.eqLogicAction[data-action=importEq]').off('click').on('click', function () {
     dialog_message += '<label class="control-label">{{Utiliser un template :}}</label> ';
     dialog_message += '<select class="bootbox-input bootbox-input-select form-control" name="template" id="jmqttTemplateSelector">';
     dialog_message += '</select><br/>';
-    dialog_message += '<div id="jmqttTemplateFromGroup" style="display:none;" class="form-group">';
+    dialog_message += '<div id="jmqttTemplateFromGroup" style="display:none;margin-bottom:20px;" class="form-group">';
     dialog_message += '<label class="control-label">{{Saisissez le Topic de base :}}</label> ';
     dialog_message += '<input class="bootbox-input bootbox-input-text form-control" autocomplete="nope" type="text" name="topic"><br/>';
     dialog_message += '<small id="passwordHelpBlock" class="form-text text-muted">Il est possible ici d\'utiliser du templating.<br/> Exemple mon-topic-\{\{le nom d\'une colonne dans mon fichier\}\}</small>';
     dialog_message += '</div>';
+    dialog_message += '<div class="form-check">';
+    dialog_message += '<label class="checkbox-inline"><input type="checkbox" name="importEquipment" checked>Importer les équipements</label>'
+    dialog_message += '</div><br/>';
+    dialog_message += '<div class="form-check">';
+    dialog_message += '<label class="checkbox-inline"><input type="checkbox" name="extractCsvFile" checked>Générer CSV</label>'
+    dialog_message += '</div><br/>';
     dialog_message += '</form>'
     bootbox.confirm({
         title: "{{Importer des équipements}}",
@@ -153,6 +159,11 @@ $('.eqLogicAction[data-action=importEq]').off('click').on('click', function () {
             if (result) {
 
                 let form = document.forms['ajaxForm'];
+
+                if(!form['importEquipment'].checked && !form['extractCsvFile'].checked) {
+                    $.fn.showAlert({message: "{{Vous devez sélectionner au moins une action}}", level: 'warning'});
+                    return false;
+                }
 
                 if (!form['csvFile'].files[0]) {
                     $.fn.showAlert({message: "{{Fichier invalide !}}", level: 'warning'});
@@ -197,8 +208,11 @@ $('.eqLogicAction[data-action=importEq]').off('click').on('click', function () {
                             return;
                         }
                         $.fn.showAlert({message: 'Import terminé', level: 'success'});
+                        // reload page after 1 second to update export list
+                        setTimeout(function () {
+                            location.reload();
+                        }, 1000);
 
-                        //TODO catch the return message and if csv file have been generated, showup the download link
                     },
                     cache: false,
                     contentType: false,

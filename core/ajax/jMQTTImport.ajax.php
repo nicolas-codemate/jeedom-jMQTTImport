@@ -38,10 +38,17 @@ try {
             $isVisible = init('isVisible');
             $isEnable = init('isEnable');
             $csvFile = $_FILES['csvFile'];
-            $extractCsvFile = init('extractCsvFile', true); //FIXME remove default value, only use temporary for test
+            $extractCsvFile = init('extractCsvFile');
+            $importEquipment = init('importEquipment');
 
             if (!$csvFile) {
                 ajax::error(['message' => __('Aucun fichier reçu', __FILE__)]);
+
+                return;
+            }
+
+            if (!$importEquipment && !$extractCsvFile) {
+                ajax::error(['message' => __('Aucune action sélectionnée', __FILE__)]);
 
                 return;
             }
@@ -72,6 +79,7 @@ try {
 
             $eqLogicCreated = jMQTTImport::importCsv(
                 $csvFile,
+                $importEquipment,
                 $broker,
                 $parentObject,
                 $columnForEqName,
@@ -81,19 +89,15 @@ try {
                 $isEnable
             );
 
-            $message = sprintf('Import de %d équipements terminé', count($eqLogicCreated));
-            jMQTTImport::logger('info', $message);
-
-            $dataToReturn = [
-                'message_import' => $message,
-            ];
+            $dataToReturn = [];
+            if ($importEquipment) {
+                $message = sprintf('Import de %d équipements terminé', count($eqLogicCreated));
+                jMQTTImport::logger('info', $message);
+                $dataToReturn['message_import'] = $message;
+            }
 
             if ($extractCsvFile && null !== $eqLogicCreated) {
-                $csvPath = jMQTTImport::buildCsv($eqLogicCreated);
-
-
-
-                $dataToReturn['csv_path'] = $csvPath;
+                jMQTTImport::buildCsv($eqLogicCreated);
             }
 
 
