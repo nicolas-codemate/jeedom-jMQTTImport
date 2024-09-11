@@ -1,0 +1,75 @@
+div.exportListContainer {
+    display: flex;
+    width: auto !important;
+    flex: 0 0 auto;
+}
+
+div.exportListContainer .exportName.cursor.displayAsTable {
+    position: relative !important;
+    top: 2px !important;
+    left: 0 !important;
+    min-width: 100% !important;
+    text-align: left;
+    min-height: 24px !important;
+    max-height: 24px !important;
+    transform: unset !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+div.exportListContainer .exportName.cursor.displayAsTable:hover {
+    background-color: var(--btn-default-color) !important;
+}
+
+div.exportListContainer .exportName.cursor.displayAsTable > .name .label:not(.displayTableRight) {
+    line-height: 14px !important;
+    margin: 0 20px !important;
+    min-width: 20% !important;
+    text-align: center !important;
+    cursor: pointer !important;
+}
+
+div.exportListContainer .exportName.cursor.displayAsTable > .name .label i {
+    margin-right: 5px;
+}
+
+div.exportListContainer .exportName.cursor.displayAsTable:first-child {
+    margin-top: 8px !important;
+}
+
+div.exportListContainer .exportName.cursor.displayAsTable:last-child {
+    margin-bottom: 13px !important;
+}
+
+
+/* displayTableRight */
+div[class*="exportName"].displayAsTable .displayTableRight {
+    display: inline;
+    position: absolute;
+    font-size: 12px;
+    right: 0;
+    top: 2px;
+    height: 20px !important;
+    max-width: 45vw;
+    overflow: hidden;
+    text-align: right;
+    z-index: 55;
+}
+
+div[class*="exportName"].displayAsTable .displayTableRight > span {
+    margin-right: 12px !important;
+}
+
+div.cursor[class*="exportName"].displayAsTable .btn {
+    height: 20px !important;
+}
+
+div.cursor[class*="exportName"].displayAsTable .displayTableRight i {
+    font-size: 11px !important;
+    height: 20px !important;
+}
+
+div.cursor[class*="exportName"].displayAsTable .displayTableRight i::before {
+    vertical-align: top !important;
+    line-height: 9px !important;
+}

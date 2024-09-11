@@ -17,10 +17,11 @@
 
 /* * ***************************Includes********************************* */
 require_once __DIR__.'/../../../../core/php/core.inc.php';
+require_once __DIR__.'/../../core/class/jMQTTImported.php';
 
 class jMQTTImport extends eqLogic
 {
-    private CONST DEFAULT_CSV_SEPARATOR = ';';
+    private const DEFAULT_CSV_SEPARATOR = ';';
 
     /*     * *************************Attributs****************************** */
 
@@ -39,7 +40,7 @@ class jMQTTImport extends eqLogic
     /*     * ***********************Methode static*************************** */
 
     /**
-     * @return jMQTT[]|null Return null if error occurs, or return an array of created jMQTT objects
+     * @return jMQTTImported[]|null Return null if error occurs, or return an array of created jMQTT imported model
      */
     public static function importCsv(
         $csvFile,
@@ -162,7 +163,7 @@ class jMQTTImport extends eqLogic
 
         // read the csv lines
         while ($line = fgetcsv($handle, null, self::DEFAULT_CSV_SEPARATOR)) {
-            $line = array_map(static function($value) {
+            $line = array_map(static function ($value) {
                 return strtolower(trim($value));
             }, $line);
             $overlay = array_fill(0, count($header), null);
@@ -212,7 +213,7 @@ class jMQTTImport extends eqLogic
                         sprintf('Application du template %s à l\'équipement %s', $template, $datum['name'])
                     );
                 }
-                $eqLogicCreated[] = $eqLogic;
+                $eqLogicCreated[] = new jMQTTImported($eqLogic, $datum);
             }
         } catch (\Throwable $exception) {
             db::rollback();
@@ -228,57 +229,70 @@ class jMQTTImport extends eqLogic
             return null;
         }
 
-        $message = sprintf('Import de %d équipements terminé', count($eqLogicCreated));
-        self::logger('info', $message);
 //        db::commit();
-
-        ajax::success($message);
 
         return $eqLogicCreated;
     }
 
     /**
-     * @param eqLogic[] $eqLogicCreated
+     * @param jMQTTImported[] $JMQTTImporteds
      */
-    public static function buildCsv(array $eqLogicCreated): ?string
+    public static function buildCsv(array $JMQTTImporteds): ?string
     {
-        // build csv in jMQTTImport/download directory
-
-        if(0 === count($eqLogicCreated)) {
+        if (0 === count($JMQTTImporteds)) {
             return null;
         }
 
-        $parentObjectName = $eqLogicCreated[0]->getObject() ? $eqLogicCreated[0]->getObject()->getName() : 'unknown';
+        $slugify = static function (?string $value) {
+            if (null === $value) {
+                return 'unknown';
+            }
 
-        $csvName = sprintf('import_%s_%s_%s.csv', $parentObjectName, $eqLogicCreated[0]->getConfiguration('eqLogic'), date('Y-m-d_H-i-s'));
+            return str_replace(' ', '-', strtolower($value));
+        };
+
+        $firstEqLogic = $JMQTTImporteds[0]->getJMQTT();
+
+        $parentObjectName = $firstEqLogic->getObject() ? $firstEqLogic->getObject()->getName() : 'unknown';
+
+        $brokerName = $firstEqLogic->getBroker() ? $firstEqLogic->getBroker()->getName() : 'unknown';
+
+        $csvName = sprintf(
+            'import_%s_%s_%s.csv',
+            date('Ymd-His'),
+            $slugify($parentObjectName),
+            $slugify($brokerName),
+        );
 
         $csvPath = __DIR__.'/../../download/'.$csvName;
 
         $handle = fopen($csvPath, 'wb');
 
-        fputcsv($handle, [
-            'id',
-            'dev_eui',
-            'join_eui',
-            'name',
-            'app_key',
-        ],
+        fputcsv(
+            $handle,
+            [
+                'id',
+                'dev_eui',
+                'join_eui',
+                'name',
+                'app_key',
+            ],
             self::DEFAULT_CSV_SEPARATOR
         );
 
-        foreach ($eqLogicCreated as $eqLogic) {
+        foreach ($JMQTTImporteds as $eqLogic) {
             fputcsv($handle, [
-              $eqLogic->getId(),
-                $eqLogic->getConfiguration('dev_eui', 'default_dev_eui'),
-                $eqLogic->getConfiguration('join_eui', 'default_join_eui'),
+                $eqLogic->getId(),
+                $eqLogic->getDevEUI(),
+                $eqLogic->getJoinEUI(),
                 $eqLogic->getName(),
-                $eqLogic->getConfiguration('app_key', 'default_app_key'),
+                $eqLogic->getAppKey(),
             ], self::DEFAULT_CSV_SEPARATOR);
         }
 
         fclose($handle);
 
-        return $csvPath . '/' . $csvName;
+        return $csvPath;
     }
 
     /**

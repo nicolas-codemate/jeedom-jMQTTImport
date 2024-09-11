@@ -81,10 +81,23 @@ try {
                 $isEnable
             );
 
+            $message = sprintf('Import de %d équipements terminé', count($eqLogicCreated));
+            jMQTTImport::logger('info', $message);
+
+            $dataToReturn = [
+                'message_import' => $message,
+            ];
+
             if ($extractCsvFile && null !== $eqLogicCreated) {
                 $csvPath = jMQTTImport::buildCsv($eqLogicCreated);
+
+
+
+                $dataToReturn['csv_path'] = $csvPath;
             }
 
+
+            ajax::success($dataToReturn);
 
             break;
         case 'fileUploadForImport':
