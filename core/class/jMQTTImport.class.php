@@ -240,12 +240,12 @@ class jMQTTImport extends eqLogic
     /**
      * @param eqLogic[] $eqLogicCreated
      */
-    public static function buildCsv(array $eqLogicCreated): string
+    public static function buildCsv(array $eqLogicCreated): ?string
     {
         // build csv in jMQTTImport/download directory
 
         if(0 === count($eqLogicCreated)) {
-            return;
+            return null;
         }
 
         $parentObjectName = $eqLogicCreated[0]->getObject() ? $eqLogicCreated[0]->getObject()->getName() : 'unknown';
