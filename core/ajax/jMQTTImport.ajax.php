@@ -38,8 +38,9 @@ try {
             $isVisible = init('isVisible');
             $isEnable = init('isEnable');
             $csvFile = $_FILES['csvFile'];
+            $extractCsvFile = init('extractCsvFile', true); //FIXME remove default value, only use temporary for test
 
-            if(!$csvFile) {
+            if (!$csvFile) {
                 ajax::error(['message' => __('Aucun fichier reçu', __FILE__)]);
 
                 return;
@@ -51,13 +52,13 @@ try {
                 return;
             }
 
-            if(!$parentObject) {
+            if (!$parentObject) {
                 ajax::error(['message' => __('Aucun objet parent selectionné', __FILE__)]);
 
                 return;
             }
 
-            if(!$columnForEqName) {
+            if (!$columnForEqName) {
                 ajax::error(['message' => __('Aucune colonne pour le nom de l\'équipement', __FILE__)]);
 
                 return;
@@ -69,11 +70,28 @@ try {
                 return;
             }
 
-            jMQTTImport::importCsv($csvFile, $broker, $parentObject, $columnForEqName, $topic, $template, $isVisible, $isEnable);
+            $eqLogicCreated = jMQTTImport::importCsv(
+                $csvFile,
+                $broker,
+                $parentObject,
+                $columnForEqName,
+                $topic,
+                $template,
+                $isVisible,
+                $isEnable
+            );
+
+            if ($extractCsvFile && null !== $eqLogicCreated) {
+                $csvPath = jMQTTImport::buildCsv($eqLogicCreated);
+            }
+
+
             break;
         case 'fileUploadForImport':
             if (!isset($_FILES['file'])) {
-                throw new \RuntimeException(__('Aucun fichier trouvé. Vérifiez le paramètre PHP (post size limit)', __FILE__));
+                throw new \RuntimeException(
+                    __('Aucun fichier trouvé. Vérifiez le paramètre PHP (post size limit)', __FILE__)
+                );
             }
 
             $allowed_ext = '.csv';
@@ -89,10 +107,10 @@ try {
 
             $uploadDir = dirname(__DIR__, 2).'/csvImport';
             if (!is_dir($uploadDir) && !mkdir($uploadDir, 0777, true) && !is_dir($uploadDir)) {
-                throw new \RuntimeException(__('Répertoire de téléversement non trouvé :', __FILE__) . ' ' . $uploadDir);
+                throw new \RuntimeException(__('Répertoire de téléversement non trouvé :', __FILE__).' '.$uploadDir);
             }
 
-            if (!move_uploaded_file($_FILES['file']['tmp_name'], $uploadDir . '/' . $fileName)) {
+            if (!move_uploaded_file($_FILES['file']['tmp_name'], $uploadDir.'/'.$fileName)) {
                 throw new \RuntimeException(__('Impossible de déplacer le fichier temporaire', __FILE__));
             }
 
