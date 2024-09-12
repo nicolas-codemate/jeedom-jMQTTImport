@@ -29,7 +29,7 @@ final class jMQTTImported
 
     public function getId(): string
     {
-        return (string)($this->jMQTT->getId() ?? 'unknown');
+        return (string)($this->jMQTT->getName() ?? 'unknown');
     }
 
     public function getDevEUI(): ?string
@@ -39,7 +39,8 @@ final class jMQTTImported
 
     public function getJoinEUI(): ?string
     {
-        return $this->csvData[$this->findBestColumnName('JoinEUI')] ?? null;
+        // AppEUI is a alias for JoinEUI
+        return $this->csvData[$this->findBestColumnName('AppEUI')] ?? null;
     }
 
     public function getAppKey(): ?string
