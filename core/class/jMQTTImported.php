@@ -27,9 +27,9 @@ final class jMQTTImported
         return $this->csvData;
     }
 
-    public function getId(): string
+    public function getId(): ?string
     {
-        return (string)($this->jMQTT->getName() ?? 'unknown');
+        return $this->csvData[$this->findBestColumnName('SN')] ?? null;
     }
 
     public function getDevEUI(): ?string

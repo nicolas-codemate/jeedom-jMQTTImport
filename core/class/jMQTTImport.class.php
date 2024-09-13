@@ -282,22 +282,22 @@ class jMQTTImport extends eqLogic
         fputcsv(
             $handle,
             [
-                'id',
+                'name',
                 'dev_eui',
                 'join_eui',
-                'name',
                 'app_key',
+                'id',
             ],
             self::DEFAULT_CSV_SEPARATOR
         );
 
         foreach ($JMQTTImporteds as $eqLogic) {
             fputcsv($handle, [
-                $eqLogic->getId(),
+                $eqLogic->getName(),
                 $eqLogic->getDevEUI(),
                 $eqLogic->getJoinEUI(),
-                $eqLogic->getName(),
                 $eqLogic->getAppKey(),
+                $eqLogic->getId(),
             ], self::DEFAULT_CSV_SEPARATOR);
         }
 
